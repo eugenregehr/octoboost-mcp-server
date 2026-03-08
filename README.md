@@ -4,16 +4,16 @@ Exposes the OctoBoost SEO API as [Model Context Protocol (MCP)](https://modelcon
 
 Get your free API key at [octo-boost.com](https://octo-boost.com) — new accounts come with free credits to try out every tool.
 
-## Why use this with an AI agent?
+## Why use this for SEO analysis?
 
-SEO audits normally require a human to kick off a crawl, wait for results, interpret a dashboard, and decide what to fix. With this MCP server, an agent can do all of that autonomously:
+Running SEO checks inside an LLM context is expensive — fetching raw HTML, parsing it, and reasoning over it consumes thousands of tokens per page. This server offloads that work to the OctoBoost API and returns **compact, structured results** (scores, flags, and diagnostics only) that cost a fraction of the tokens while giving the agent exactly what it needs to reason and act.
 
-- **Discovery first** — call `list_analyzers` to understand what checks exist (30 analyzers across 8 categories) before deciding which ones matter for the task at hand.
-- **Scoped crawls** — call `scan_domain` to get the full URL inventory of a site, then pass exactly the pages that need attention to the analysis step.
-- **Targeted or full analysis** — run every analyzer at once, isolate a single check (e.g. `title`), or focus on a whole category (e.g. `accessibility`). The agent picks the right scope based on the task.
-- **Real-time progress** — `analyze` processes URLs one at a time and emits a `notifications/progress` event after each one, so the agent (and the user watching) gets live feedback instead of waiting for a bulk result.
-- **Credit awareness** — every response includes credits used and credits remaining, so an agent can make cost-conscious decisions (e.g. scan a sample before committing to a full audit).
-- **Clear error signals** — expired keys surface as `401`, exhausted credits as `402`. An agent can catch these and report them intelligibly rather than producing a confusing failure.
+- **Token-efficient** — structured API results instead of raw HTML; a full 30-analyzer audit of a page fits in a few hundred tokens.
+- **LLM-friendly output** — scores and pass/fail flags, not prose. No parsing required.
+- **Scoped execution** — run one analyzer, one category, or a full audit. The agent picks the right scope and avoids unnecessary API calls.
+- **Real-time progress** — `analyze` emits a `notifications/progress` event after each URL, so the agent and user get live feedback.
+- **Credit awareness** — every response includes credits used/remaining so the agent can make cost-conscious decisions.
+- **Clear error signals** — `401` for expired keys, `402` for exhausted credits. Easy for an agent to catch and report.
 
 ## Tools
 
@@ -106,17 +106,9 @@ Analyzes one or more URLs for SEO issues. URLs are processed sequentially with p
 
 ## Setup
 
-### 1. Get an API key
+1. **Get an API key** — sign up at [octo-boost.com](https://octo-boost.com). New accounts get free credits.
 
-Sign up at [octo-boost.com](https://octo-boost.com). New accounts receive free credits — no payment required to get started.
-
-### 2. Configure your MCP client
-
-No installation or build step required — `npx` downloads and runs the server automatically.
-
-#### Claude Desktop
-
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+2. **Add to your MCP client** — no install needed, `npx` runs it automatically.
 
 ```json
 {
@@ -132,49 +124,16 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
-#### Cursor
+Add this block to your client's MCP config file:
+- **Claude Desktop**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Cursor**: Cursor MCP settings file
+- **OpenClaw**: `~/.openclaw/mcp.json`
 
-Add the same block under `mcpServers` in your Cursor MCP settings file.
-
-#### OpenClaw
-
-Add to `~/.openclaw/mcp.json` (create the file if it doesn't exist):
-
-```json
-{
-  "mcpServers": {
-    "octoboost-seo": {
-      "command": "npx",
-      "args": ["-y", "octoboost-mcp-server"],
-      "env": {
-        "OCTOBOOST_API_KEY": "your-api-key"
-      }
-    }
-  }
-}
-```
-
-Restart OpenClaw after saving. Alternatively, use the CLI:
-
-```bash
-openclaw config set mcpServers.octoboost-seo.command "npx"
-openclaw config set mcpServers.octoboost-seo.args '["-y", "octoboost-mcp-server"]'
-openclaw config set mcpServers.octoboost-seo.env.OCTOBOOST_API_KEY "your-api-key"
-```
-
-### 3. Verify with MCP Inspector
+3. **(Optional) Verify** — run the MCP Inspector and call `list_analyzers`:
 
 ```bash
 OCTOBOOST_API_KEY=your-key npx @modelcontextprotocol/inspector npx octoboost-mcp-server
 ```
-
-Open the Inspector UI, call `list_analyzers`, and confirm you see 30 analyzer keys.
-
-## Environment variables
-
-| Variable            | Required | Description                         |
-| ------------------- | -------- | ----------------------------------- |
-| `OCTOBOOST_API_KEY` | yes      | API key from your OctoBoost account |
 
 ## Example agent workflow
 
