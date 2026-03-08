@@ -1,7 +1,12 @@
 {
   "name": "octoboost-mcp-server",
-  "version": "1.0.3",
-  "description": "MCP server exposing OctoBoost SEO API as tools for AI agents",
+  "version": "1.0.5",
+  "mcpName": "io.github.eugenregehr/octoboost",
+  "description": "OctoBoost MCP Server for token-efficient SEO analysis. Analyze multiple URLs with categorized checks and scored results.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eugenregehr/octoboost-mcp-server.git"
+  },
   "type": "module",
   "main": "dist/index.js",
   "bin": {

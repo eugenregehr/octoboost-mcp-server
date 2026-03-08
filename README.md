@@ -1,5 +1,7 @@
 # OctoBoost SEO — MCP Server
 
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-published-blue)](https://registry.modelcontextprotocol.io/servers/io.github.eugenregehr/octoboost)
+
 Exposes the OctoBoost SEO API as [Model Context Protocol (MCP)](https://modelcontextprotocol.io) tools so AI agents can audit websites without leaving their reasoning loop.
 
 Get your free API key at [octo-boost.com](https://octo-boost.com) — new accounts come with free credits to try out every tool.
