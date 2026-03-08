@@ -1,5 +1,5 @@
 const apiKey = process.env.OCTOBOOST_API_KEY;
-const apiUrl = "https://octo-boost.com";
+const apiUrl = "https://www.octo-boost.com";
 
 if (!apiKey) throw new Error("OCTOBOOST_API_KEY environment variable is required");
 
