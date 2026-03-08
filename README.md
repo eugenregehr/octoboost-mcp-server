@@ -110,16 +110,9 @@ Analyzes one or more URLs for SEO issues. URLs are processed sequentially with p
 
 Sign up at [octo-boost.com](https://octo-boost.com). New accounts receive free credits — no payment required to get started.
 
-### 2. Build
+### 2. Configure your MCP client
 
-```bash
-npm install
-npm run build
-```
-
-Output lands in `dist/`.
-
-### 3. Configure your MCP client
+No installation or build step required — `npx` downloads and runs the server automatically.
 
 #### Claude Desktop
 
@@ -129,8 +122,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "octoboost-seo": {
-      "command": "node",
-      "args": ["/absolute/path/to/mcp-server/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "octoboost-mcp-server"],
       "env": {
         "OCTOBOOST_API_KEY": "your-api-key"
       }
@@ -151,8 +144,8 @@ Add to `~/.openclaw/mcp.json` (create the file if it doesn't exist):
 {
   "mcpServers": {
     "octoboost-seo": {
-      "command": "node",
-      "args": ["/absolute/path/to/mcp-server/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "octoboost-mcp-server"],
       "env": {
         "OCTOBOOST_API_KEY": "your-api-key"
       }
@@ -164,15 +157,15 @@ Add to `~/.openclaw/mcp.json` (create the file if it doesn't exist):
 Restart OpenClaw after saving. Alternatively, use the CLI:
 
 ```bash
-openclaw config set mcpServers.octoboost-seo.command "node"
-openclaw config set mcpServers.octoboost-seo.args '["/absolute/path/to/mcp-server/dist/index.js"]'
+openclaw config set mcpServers.octoboost-seo.command "npx"
+openclaw config set mcpServers.octoboost-seo.args '["-y", "octoboost-mcp-server"]'
 openclaw config set mcpServers.octoboost-seo.env.OCTOBOOST_API_KEY "your-api-key"
 ```
 
-### 4. Verify with MCP Inspector
+### 3. Verify with MCP Inspector
 
 ```bash
-OCTOBOOST_API_KEY=your-key npx @modelcontextprotocol/inspector node dist/index.js
+OCTOBOOST_API_KEY=your-key npx @modelcontextprotocol/inspector npx octoboost-mcp-server
 ```
 
 Open the Inspector UI, call `list_analyzers`, and confirm you see 30 analyzer keys.

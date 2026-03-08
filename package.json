@@ -1,9 +1,12 @@
 {
   "name": "octoboost-mcp-server",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "MCP server exposing OctoBoost SEO API as tools for AI agents",
   "type": "module",
   "main": "dist/index.js",
+  "bin": {
+    "octoboost-mcp-server": "dist/index.js"
+  },
   "files": [
     "dist",
     "README.md",
