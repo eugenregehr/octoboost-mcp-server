@@ -1,6 +1,6 @@
 # OctoBoost SEO — MCP Server
 
-[![MCP Registry](https://img.shields.io/badge/MCP_Registry-published-blue)](https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.eugenregehr%2Foctoboost)
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-published-blue)](https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.eugenregehr/geo-seo-analyzer-octoboost)
 
 Exposes the OctoBoost SEO API as [Model Context Protocol (MCP)](https://modelcontextprotocol.io) tools so AI agents can audit websites without leaving their reasoning loop.
 
@@ -101,11 +101,11 @@ Analyzes one or more URLs for SEO issues. URLs are processed sequentially with p
 
 **Mode reference:**
 
-| Mode       | What runs                     | GEO score | Typical use                        |
-| ---------- | ----------------------------- | --------- | ---------------------------------- |
-| `full`     | All 30 analyzers              | Yes       | Comprehensive site audit           |
+| Mode       | What runs                     | GEO score  | Typical use                                                      |
+| ---------- | ----------------------------- | ---------- | ---------------------------------------------------------------- |
+| `full`     | All 30 analyzers              | Yes        | Comprehensive site audit                                         |
 | `category` | All analyzers in one category | `geo` only | Focused audit (e.g. `accessibility`, or `geo` for AI visibility) |
-| `analyzer` | One specific analyzer         | No        | Targeted check (e.g. `title`)      |
+| `analyzer` | One specific analyzer         | No         | Targeted check (e.g. `title`)                                    |
 
 > **`category: "geo"`** runs only the 18 GEO-relevant analyzers and returns the `geoScore` object directly (no percentage score). This is a cheaper alternative to `full` mode when you only need AI visibility metrics.
 
@@ -113,16 +113,16 @@ Analyzes one or more URLs for SEO issues. URLs are processed sequentially with p
 
 Full-mode audits return a `geoScore` alongside the technical SEO score. It measures how well the page is optimized for AI-driven search (ChatGPT, Perplexity, Claude, Gemini) — answering whether AI agents can understand, extract, and cite the content.
 
-| Field | Range | Description |
-| ----- | ----- | ----------- |
-| `geoScore` | 0–100 | Weighted composite score |
-| `technicalAccess` | 0–100% | Robots, sitemap, HTML structure accessibility |
-| `contentStructure` | 0–100% | Structured data, headings, lists |
-| `entityClarity` | 0–100% | Title, meta description, language, link clarity |
-| `authoritySignals` | 0–100% | Canonical, social meta, hreflang, alt tags |
-| `citationLikelihood` | 0–100% | Probability of being cited in an AI answer |
-| `ragReadiness` | 0–100% | Suitability for RAG retrieval pipelines |
-| `llmAssessment` | string | 2–3 sentence qualitative verdict |
+| Field                     | Range  | Description                                     |
+| ------------------------- | ------ | ----------------------------------------------- |
+| `geoScore`                | 0–100  | Weighted composite score                        |
+| `technicalAccess`         | 0–100% | Robots, sitemap, HTML structure accessibility   |
+| `contentStructure`        | 0–100% | Structured data, headings, lists                |
+| `entityClarity`           | 0–100% | Title, meta description, language, link clarity |
+| `authoritySignals`        | 0–100% | Canonical, social meta, hreflang, alt tags      |
+| `citationLikelihood`      | 0–100% | Probability of being cited in an AI answer      |
+| `ragReadiness`            | 0–100% | Suitability for RAG retrieval pipelines         |
+| `llmAssessment`           | string | 2–3 sentence qualitative verdict                |
 | `whyThisMattersForAgents` | string | Actionable explanation focused on weakest areas |
 
 **Example output (full mode):**
