@@ -1,8 +1,8 @@
 {
   "name": "octoboost-mcp-server",
-  "version": "1.0.5",
-  "mcpName": "io.github.eugenregehr/octoboost",
-  "description": "OctoBoost MCP Server for token-efficient SEO analysis. Analyze multiple URLs with categorized checks and scored results.",
+  "version": "1.0.7",
+  "mcpName": "io.github.eugenregehr/geo-seo-analyzer-octoboost",
+  "description": "OctoBoost MCP Server for token-efficient SEO / GEO analysis. Analyze multiple URLs with categorized checks and scored results.",
   "repository": {
     "type": "git",
     "url": "https://github.com/eugenregehr/octoboost-mcp-server.git"
