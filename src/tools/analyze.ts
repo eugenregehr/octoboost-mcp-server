@@ -2,12 +2,27 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { apiRequest } from "../client.js";
 
+interface GeoScoreResult {
+  geoScore: number;
+  subMetrics: {
+    technicalAccess: number;
+    contentStructure: number;
+    entityClarity: number;
+    authoritySignals: number;
+  };
+  citationLikelihood: number;
+  ragReadiness: number;
+  whyThisMattersForAgents: string;
+  llmAssessment: string;
+}
+
 interface BatchResponse {
   results: Array<{
     url: string;
     analyzedAt: string;
     error?: string;
     score?: number;
+    geoScore?: GeoScoreResult;
     results?: Record<string, unknown>;
     result?: Record<string, unknown>;
     analyzer?: string;
@@ -35,7 +50,7 @@ export function registerAnalyze(server: McpServer): void {
     "analyze",
     {
       description:
-        "Analyze one or more URLs for SEO issues. Processes URLs sequentially and reports progress after each. Supports full analysis, a single analyzer, or a category of analyzers.",
+        "Analyze one or more URLs for SEO issues. Processes URLs sequentially and reports progress after each. Supports full analysis, a single analyzer, or a category of analyzers. Full mode also returns a GEO/AEO score measuring AI search visibility (citation likelihood, RAG readiness, and sub-metrics for technical access, content structure, entity clarity, and authority signals).",
       inputSchema,
     },
     async (args, extra) => {
@@ -100,6 +115,32 @@ export function registerAnalyze(server: McpServer): void {
           lines.push(`  Error: ${result.error}`);
         } else if (result.score !== undefined) {
           lines.push(`  Score: ${result.score}`);
+          if (result.geoScore !== undefined) {
+            const g = result.geoScore;
+            lines.push(`  GEO Score: ${g.geoScore}/100`);
+            lines.push(`    Technical Access:  ${Math.round(g.subMetrics.technicalAccess * 100)}%`);
+            lines.push(`    Content Structure: ${Math.round(g.subMetrics.contentStructure * 100)}%`);
+            lines.push(`    Entity Clarity:    ${Math.round(g.subMetrics.entityClarity * 100)}%`);
+            lines.push(`    Authority Signals: ${Math.round(g.subMetrics.authoritySignals * 100)}%`);
+            lines.push(`    Citation Likelihood: ${Math.round(g.citationLikelihood * 100)}%`);
+            lines.push(`    RAG Readiness:       ${Math.round(g.ragReadiness * 100)}%`);
+            lines.push(`    Assessment: ${g.llmAssessment}`);
+            lines.push(`    Why it matters: ${g.whyThisMattersForAgents}`);
+          }
+          if (result.results) {
+            lines.push(`  Results: ${JSON.stringify(result.results, null, 2)}`);
+          }
+        } else if (result.geoScore !== undefined) {
+          const g = result.geoScore;
+          lines.push(`  GEO Score: ${g.geoScore}/100`);
+          lines.push(`    Technical Access:  ${Math.round(g.subMetrics.technicalAccess * 100)}%`);
+          lines.push(`    Content Structure: ${Math.round(g.subMetrics.contentStructure * 100)}%`);
+          lines.push(`    Entity Clarity:    ${Math.round(g.subMetrics.entityClarity * 100)}%`);
+          lines.push(`    Authority Signals: ${Math.round(g.subMetrics.authoritySignals * 100)}%`);
+          lines.push(`    Citation Likelihood: ${Math.round(g.citationLikelihood * 100)}%`);
+          lines.push(`    RAG Readiness:       ${Math.round(g.ragReadiness * 100)}%`);
+          lines.push(`    Assessment: ${g.llmAssessment}`);
+          lines.push(`    Why it matters: ${g.whyThisMattersForAgents}`);
           if (result.results) {
             lines.push(`  Results: ${JSON.stringify(result.results, null, 2)}`);
           }

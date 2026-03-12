@@ -12,6 +12,7 @@ Running SEO checks inside an LLM context is expensive — fetching raw HTML, par
 
 - **Token-efficient** — structured API results instead of raw HTML; a full 30-analyzer audit of a page fits in a few hundred tokens.
 - **LLM-friendly output** — scores and pass/fail flags, not prose. No parsing required.
+- **GEO/AEO score** — full-mode audits include a dedicated AI visibility score alongside the technical SEO score (see below).
 - **Scoped execution** — run one analyzer, one category, or a full audit. The agent picks the right scope and avoids unnecessary API calls.
 - **Real-time progress** — `analyze` emits a `notifications/progress` event after each URL, so the agent and user get live feedback.
 - **Credit awareness** — every response includes credits used/remaining so the agent can make cost-conscious decisions.
@@ -61,9 +62,9 @@ Current analyzer keys:
 **No input required.**
 
 ```
-Found 30 analyzers across 4 categories.
+Found 30 analyzers across 5 categories.
 
-Categories: seo, accessibility, ux, performance
+Categories: seo, accessibility, ux, performance, geo
 
 Analyzers:
   title (categories: seo)
@@ -100,11 +101,45 @@ Analyzes one or more URLs for SEO issues. URLs are processed sequentially with p
 
 **Mode reference:**
 
-| Mode       | What runs                     | Typical use                        |
-| ---------- | ----------------------------- | ---------------------------------- |
-| `full`     | All 30 analyzers              | Comprehensive site audit           |
-| `category` | All analyzers in one category | Focused audit (e.g. accessibility) |
-| `analyzer` | One specific analyzer         | Targeted check (e.g. `title`)      |
+| Mode       | What runs                     | GEO score | Typical use                        |
+| ---------- | ----------------------------- | --------- | ---------------------------------- |
+| `full`     | All 30 analyzers              | Yes       | Comprehensive site audit           |
+| `category` | All analyzers in one category | `geo` only | Focused audit (e.g. `accessibility`, or `geo` for AI visibility) |
+| `analyzer` | One specific analyzer         | No        | Targeted check (e.g. `title`)      |
+
+> **`category: "geo"`** runs only the 18 GEO-relevant analyzers and returns the `geoScore` object directly (no percentage score). This is a cheaper alternative to `full` mode when you only need AI visibility metrics.
+
+### GEO/AEO Score
+
+Full-mode audits return a `geoScore` alongside the technical SEO score. It measures how well the page is optimized for AI-driven search (ChatGPT, Perplexity, Claude, Gemini) — answering whether AI agents can understand, extract, and cite the content.
+
+| Field | Range | Description |
+| ----- | ----- | ----------- |
+| `geoScore` | 0–100 | Weighted composite score |
+| `technicalAccess` | 0–100% | Robots, sitemap, HTML structure accessibility |
+| `contentStructure` | 0–100% | Structured data, headings, lists |
+| `entityClarity` | 0–100% | Title, meta description, language, link clarity |
+| `authoritySignals` | 0–100% | Canonical, social meta, hreflang, alt tags |
+| `citationLikelihood` | 0–100% | Probability of being cited in an AI answer |
+| `ragReadiness` | 0–100% | Suitability for RAG retrieval pipelines |
+| `llmAssessment` | string | 2–3 sentence qualitative verdict |
+| `whyThisMattersForAgents` | string | Actionable explanation focused on weakest areas |
+
+**Example output (full mode):**
+
+```
+URL: https://example.com
+  Score: { percentage: 78, ... }
+  GEO Score: 65/100
+    Technical Access:  95%
+    Content Structure: 52%
+    Entity Clarity:    70%
+    Authority Signals: 60%
+    Citation Likelihood: 61%
+    RAG Readiness:       69%
+    Assessment: This page has moderate AI search visibility (GEO score: 65/100). Its strongest dimension is technical accessibility (95%), while content structure (52%) needs the most attention. Targeted improvements would meaningfully increase citation likelihood.
+    Why it matters: The page lacks well-structured content (headings, structured data, lists), making it hard for AI to extract and cite information accurately.
+```
 
 ## Setup
 
@@ -151,5 +186,7 @@ OCTOBOOST_API_KEY=your-key npx @modelcontextprotocol/inspector npx octoboost-mcp
    → agent reads scores, identifies 3 failing pages
 
 4. analyze { urls: [3 failing URLs], mode: "full" }
-   → agent gets the complete picture and writes a remediation report
+   → agent gets the complete picture including GEO/AEO score
+   → agent sees geoScore: 48/100, low contentStructure (32%)
+   → agent writes a remediation report covering both technical SEO and AI visibility
 ```
