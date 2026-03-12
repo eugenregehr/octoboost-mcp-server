@@ -1,151 +1,47 @@
-# OctoBoost SEO — MCP Server
+# OctoBoost SEO MCP Server
 
 [![MCP Registry](https://img.shields.io/badge/MCP_Registry-published-blue)](https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.eugenregehr/geo-seo-analyzer-octoboost)
 
-Exposes the OctoBoost SEO API as [Model Context Protocol (MCP)](https://modelcontextprotocol.io) tools so AI agents can audit websites without leaving their reasoning loop.
+Expose the OctoBoost SEO API as [Model Context Protocol (MCP)](https://modelcontextprotocol.io) tools so agents can audit websites with compact, structured results instead of fetching and parsing raw HTML.
 
-Get your free API key at [octo-boost.com](https://octo-boost.com) — new accounts come with free credits to try out every tool.
+Get your free API key at [octo-boost.com](https://octo-boost.com). New accounts include free credits to try every tool.
 
-## Why use this for SEO analysis?
+## What This Server Does
 
-Running SEO checks inside an LLM context is expensive — fetching raw HTML, parsing it, and reasoning over it consumes thousands of tokens per page. This server offloads that work to the OctoBoost API and returns **compact, structured results** (scores, flags, and diagnostics only) that cost a fraction of the tokens while giving the agent exactly what it needs to reason and act.
+`octoboost-mcp-server` gives an MCP client three core capabilities:
 
-- **Token-efficient** — structured API results instead of raw HTML; a full 30-analyzer audit of a page fits in a few hundred tokens.
-- **LLM-friendly output** — scores and pass/fail flags, not prose. No parsing required.
-- **GEO/AEO score** — full-mode audits include a dedicated AI visibility score alongside the technical SEO score (see below).
-- **Scoped execution** — run one analyzer, one category, or a full audit. The agent picks the right scope and avoids unnecessary API calls.
-- **Real-time progress** — `analyze` emits a `notifications/progress` event after each URL, so the agent and user get live feedback.
-- **Credit awareness** — every response includes credits used/remaining so the agent can make cost-conscious decisions.
-- **Clear error signals** — `401` for expired keys, `402` for exhausted credits. Easy for an agent to catch and report.
+- discover available analyzers with `list_analyzers`
+- crawl a domain for relevant URLs with `scan_domain`
+- run targeted or full audits with `analyze`
 
-## Tools
+It is built for agent workflows that need SEO and AI-visibility signals inside the reasoning loop without spending thousands of tokens on raw page content.
 
-### `list_analyzers`
+## Who It's For
 
-Returns all available analyzer keys, their categories, and their weights.
+This server is a good fit for:
 
-Call this at the start of any audit session to let the agent know what it can work with.
+- developers building MCP-enabled products, assistants, or internal automation
+- teams using MCP clients such as Cursor or Claude Desktop and wanting SEO tooling via config only
+- AI agent workflows that need token-efficient site audits, progress updates, and structured outputs they can reason over
 
-Current analyzer keys:
+It is less useful if you want a general SEO learning guide or a raw HTML scraping tool. The main value here is compact audit output for automated workflows.
 
-- `alt-tags`
-- `color-contrast`
-- `title`
-- `meta-description`
-- `heading-hierarchy`
-- `canonical`
-- `aria-attribute-check`
-- `error-handling-check`
-- `form-check`
-- `h1-check`
-- `hreflang`
-- `html-lang`
-- `html-structure`
-- `image-optimization`
-- `image-size`
-- `internal-links`
-- `link-descriptions`
-- `list-markup`
-- `lorem-ipsum`
-- `meta-viewport`
-- `robots-meta`
-- `robots-txt`
-- `script-loading`
-- `script-size`
-- `social-meta`
-- `structured-data`
-- `tab-focus-order`
-- `touch-target-size`
-- `url-structure`
-- `xml-sitemap`
+## Why Use This Instead Of Raw Scraping?
 
-**No input required.**
+Running SEO checks directly in an LLM context is expensive. OctoBoost moves the heavy lifting to the API and returns only the signals an agent needs to decide what to do next.
 
-```
-Found 30 analyzers across 5 categories.
+- **Token-efficient**: structured results instead of raw HTML
+- **LLM-friendly**: scores, flags, and diagnostics instead of prose parsing
+- **Scoped execution**: run one analyzer, one category, or a full audit
+- **Real-time progress**: `analyze` emits `notifications/progress` after each URL
+- **Credit-aware**: responses include credits used and credits remaining
+- **Predictable errors**: `401` for invalid or expired keys, `402` for exhausted credits
 
-Categories: seo, accessibility, ux, performance, geo
+## Quick Start
 
-Analyzers:
-  title (categories: seo)
-  meta_description (categories: seo)
-  ...
-```
-
----
-
-### `scan_domain`
-
-Crawls a domain and returns all SEO-relevant page URLs.
-
-| Parameter             | Type     | Default | Description                                |
-| --------------------- | -------- | ------- | ------------------------------------------ |
-| `domain`              | string   | —       | Domain or URL to scan (e.g. `example.com`) |
-| `maxPages`            | number   | `100`   | Max pages to crawl (max: 500)              |
-| `excludePatterns`     | string[] | `[]`    | URL patterns to skip                       |
-| `respectRobotsTxt`    | boolean  | `true`  | Honour robots.txt                          |
-| `defaultLanguageOnly` | boolean  | `true`  | Skip alternate-language duplicates         |
-
----
-
-### `analyze`
-
-Analyzes one or more URLs for SEO issues. URLs are processed sequentially with progress notifications emitted after each.
-
-| Parameter  | Type                                     | Description                          |
-| ---------- | ---------------------------------------- | ------------------------------------ |
-| `urls`     | string[]                                 | URLs to analyze (max: 20)            |
-| `mode`     | `"full"` \| `"analyzer"` \| `"category"` | Scope of analysis                    |
-| `analyzer` | string?                                  | Required when `mode` is `"analyzer"` |
-| `category` | string?                                  | Required when `mode` is `"category"` |
-
-**Mode reference:**
-
-| Mode       | What runs                     | GEO score  | Typical use                                                      |
-| ---------- | ----------------------------- | ---------- | ---------------------------------------------------------------- |
-| `full`     | All 30 analyzers              | Yes        | Comprehensive site audit                                         |
-| `category` | All analyzers in one category | `geo` only | Focused audit (e.g. `accessibility`, or `geo` for AI visibility) |
-| `analyzer` | One specific analyzer         | No         | Targeted check (e.g. `title`)                                    |
-
-> **`category: "geo"`** runs only the 18 GEO-relevant analyzers and returns the `geoScore` object directly (no percentage score). This is a cheaper alternative to `full` mode when you only need AI visibility metrics.
-
-### GEO/AEO Score
-
-Full-mode audits return a `geoScore` alongside the technical SEO score. It measures how well the page is optimized for AI-driven search (ChatGPT, Perplexity, Claude, Gemini) — answering whether AI agents can understand, extract, and cite the content.
-
-| Field                     | Range  | Description                                     |
-| ------------------------- | ------ | ----------------------------------------------- |
-| `geoScore`                | 0–100  | Weighted composite score                        |
-| `technicalAccess`         | 0–100% | Robots, sitemap, HTML structure accessibility   |
-| `contentStructure`        | 0–100% | Structured data, headings, lists                |
-| `entityClarity`           | 0–100% | Title, meta description, language, link clarity |
-| `authoritySignals`        | 0–100% | Canonical, social meta, hreflang, alt tags      |
-| `citationLikelihood`      | 0–100% | Probability of being cited in an AI answer      |
-| `ragReadiness`            | 0–100% | Suitability for RAG retrieval pipelines         |
-| `llmAssessment`           | string | 2–3 sentence qualitative verdict                |
-| `whyThisMattersForAgents` | string | Actionable explanation focused on weakest areas |
-
-**Example output (full mode):**
-
-```
-URL: https://example.com
-  Score: { percentage: 78, ... }
-  GEO Score: 65/100
-    Technical Access:  95%
-    Content Structure: 52%
-    Entity Clarity:    70%
-    Authority Signals: 60%
-    Citation Likelihood: 61%
-    RAG Readiness:       69%
-    Assessment: This page has moderate AI search visibility (GEO score: 65/100). Its strongest dimension is technical accessibility (95%), while content structure (52%) needs the most attention. Targeted improvements would meaningfully increase citation likelihood.
-    Why it matters: The page lacks well-structured content (headings, structured data, lists), making it hard for AI to extract and cite information accurately.
-```
-
-## Setup
-
-1. **Get an API key** — sign up at [octo-boost.com](https://octo-boost.com). New accounts get free credits.
-
-2. **Add to your MCP client** — no install needed, `npx` runs it automatically.
+1. Get an API key from [octo-boost.com](https://octo-boost.com).
+2. Add the server to your MCP client config.
+3. Call `list_analyzers` to verify the connection.
 
 ```json
 {
@@ -161,32 +57,105 @@ URL: https://example.com
 }
 ```
 
-Add this block to your client's MCP config file:
+Common config locations:
+
 - **Claude Desktop**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Cursor**: Cursor MCP settings file
+- **Cursor**: Cursor MCP settings
 - **OpenClaw**: `~/.openclaw/mcp.json`
 
-3. **(Optional) Verify** — run the MCP Inspector and call `list_analyzers`:
+Optional local verification with MCP Inspector:
 
 ```bash
 OCTOBOOST_API_KEY=your-key npx @modelcontextprotocol/inspector npx octoboost-mcp-server
 ```
 
-## Example agent workflow
+## Core Workflow
 
-```
+Most agent flows follow this pattern:
+
+```text
 1. list_analyzers
-   → agent learns categories and picks "accessibility" for the task
+   -> learn categories and available checks
 
 2. scan_domain { domain: "acme.com", maxPages: 50 }
-   → agent receives 38 URLs
+   -> collect relevant URLs for the audit
 
-3. analyze { urls: [first 10 URLs], mode: "category", category: "accessibility" }
-   → progress: 1/10 … 10/10
-   → agent reads scores, identifies 3 failing pages
+3. analyze { urls: [...], mode: "category", category: "accessibility" }
+   -> inspect one category across a batch of pages
 
-4. analyze { urls: [3 failing URLs], mode: "full" }
-   → agent gets the complete picture including GEO/AEO score
-   → agent sees geoScore: 48/100, low contentStructure (32%)
-   → agent writes a remediation report covering both technical SEO and AI visibility
+4. analyze { urls: [high-priority pages], mode: "full" }
+   -> get the full technical SEO score plus GEO/AEO score
 ```
+
+## Tools Overview
+
+### `list_analyzers`
+
+Returns available analyzer keys, categories, and weights. Call this first so an agent knows what it can run.
+
+- no input required
+- current categories include `seo`, `accessibility`, `ux`, `performance`, and `geo`
+
+### `scan_domain`
+
+Crawls a domain and returns SEO-relevant URLs.
+
+| Parameter             | Type     | Default | Description                        |
+| --------------------- | -------- | ------- | ---------------------------------- |
+| `domain`              | string   | —       | Domain or URL to scan              |
+| `maxPages`            | number   | `100`   | Maximum pages to crawl, up to 500  |
+| `excludePatterns`     | string[] | `[]`    | URL patterns to skip               |
+| `respectRobotsTxt`    | boolean  | `true`  | Honor `robots.txt`                 |
+| `defaultLanguageOnly` | boolean  | `true`  | Skip alternate-language duplicates |
+
+### `analyze`
+
+Runs audits for one or more URLs. URLs are processed sequentially and emit progress notifications after each one.
+
+| Parameter  | Type                                     | Description                          |
+| ---------- | ---------------------------------------- | ------------------------------------ |
+| `urls`     | string[]                                 | URLs to analyze, up to 20            |
+| `mode`     | `"full"` \| `"analyzer"` \| `"category"` | Scope of analysis                    |
+| `analyzer` | string                                   | Required when `mode` is `"analyzer"` |
+| `category` | string                                   | Required when `mode` is `"category"` |
+
+| Mode       | What runs     | GEO score  | Typical use                                            |
+| ---------- | ------------- | ---------- | ------------------------------------------------------ |
+| `full`     | All analyzers | Yes        | Comprehensive audit                                    |
+| `category` | One category  | `geo` only | Focused audit such as `accessibility` or AI visibility |
+| `analyzer` | One analyzer  | No         | Targeted check such as `title`                         |
+
+If you only need AI visibility signals, `category: "geo"` is cheaper than `full` mode and returns the `geoScore` object directly.
+
+## GEO/AEO Output
+
+Roadmap item 1 is complete: full audits now include a `geoScore` alongside the technical SEO score.
+
+This score is meant for AI-search and agent workflows. It helps answer whether a page is easy for systems like ChatGPT, Claude, Gemini, or Perplexity to understand, extract, retrieve, and cite.
+
+Key fields include:
+
+- `geoScore`
+- `technicalAccess`
+- `contentStructure`
+- `entityClarity`
+- `authoritySignals`
+- `citationLikelihood`
+- `ragReadiness`
+- `llmAssessment`
+- `whyThisMattersForAgents`
+
+## Project Status
+
+Live today:
+
+- [x] core audit workflow via `list_analyzers`, `scan_domain`, and `analyze`
+- [x] GEO/AEO scoring for AI visibility
+- [x] compact, credit-aware responses for agent execution
+
+Planned next:
+
+- [ ] LLM-based prioritization and condensation for more compact output
+- [ ] higher-level tools such as `get_fix_plan`, `summarize_top_opportunities` and `compare_urls`
+- [ ] better site-level workflows built on top of crawl plus analysis
+- [ ] dedicated interface and API documentation
