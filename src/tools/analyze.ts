@@ -21,13 +21,20 @@ interface BatchResponse {
     url: string;
     analyzedAt: string;
     error?: string;
-    score?: number;
-    geoScore?: GeoScoreResult;
-    results?: Record<string, unknown>;
-    result?: Record<string, unknown>;
-    analyzer?: string;
-    category?: string;
     statusCode?: number;
+    // Full / category analysis fields
+    score?: number;
+    scores?: Record<string, number>;
+    geoScore?: GeoScoreResult;
+    issues?: Array<Record<string, unknown>>;
+    passed?: string[];
+    // Single analyzer fields
+    analyzer?: Record<string, unknown>;
+    level?: string;
+    summary?: string;
+    count?: number;
+    examples?: Array<Record<string, unknown>>;
+    fix?: string;
   }>;
   total_urls: number;
   successful: number;
@@ -114,7 +121,14 @@ export function registerAnalyze(server: McpServer): void {
         if (result.error) {
           lines.push(`  Error: ${result.error}`);
         } else if (result.score !== undefined) {
+          // Full or category analysis (LlmFormattedResponse)
           lines.push(`  Score: ${result.score}`);
+          if (result.scores) {
+            const cats = Object.entries(result.scores as Record<string, number>)
+              .map(([k, v]) => `${k}: ${v}`)
+              .join(", ");
+            lines.push(`  Category scores: ${cats}`);
+          }
           if (result.geoScore !== undefined) {
             const g = result.geoScore;
             lines.push(`  GEO Score: ${g.geoScore}/100`);
@@ -127,25 +141,40 @@ export function registerAnalyze(server: McpServer): void {
             lines.push(`    Assessment: ${g.llmAssessment}`);
             lines.push(`    Why it matters: ${g.whyThisMattersForAgents}`);
           }
-          if (result.results) {
-            lines.push(`  Results: ${JSON.stringify(result.results, null, 2)}`);
+          const issues = result.issues as Array<Record<string, unknown>> | undefined;
+          if (issues && issues.length > 0) {
+            lines.push(`  Issues (${issues.length}):`);
+            for (const issue of issues) {
+              lines.push(`    [${issue.level}] ${issue.key}: ${issue.summary ?? ""}`);
+              if (issue.count !== undefined) lines.push(`      Count: ${issue.count}`);
+              const examples = issue.examples as Array<Record<string, unknown>> | undefined;
+              if (examples && examples.length > 0) {
+                for (const ex of examples) {
+                  lines.push(`      - ${ex.where}${ex.evidence ? ": " + String(ex.evidence) : ""}`);
+                }
+              }
+              if (issue.fix) lines.push(`      Fix: ${issue.fix}`);
+            }
           }
-        } else if (result.geoScore !== undefined) {
-          const g = result.geoScore;
-          lines.push(`  GEO Score: ${g.geoScore}/100`);
-          lines.push(`    Technical Access:  ${Math.round(g.subMetrics.technicalAccess * 100)}%`);
-          lines.push(`    Content Structure: ${Math.round(g.subMetrics.contentStructure * 100)}%`);
-          lines.push(`    Entity Clarity:    ${Math.round(g.subMetrics.entityClarity * 100)}%`);
-          lines.push(`    Authority Signals: ${Math.round(g.subMetrics.authoritySignals * 100)}%`);
-          lines.push(`    Citation Likelihood: ${Math.round(g.citationLikelihood * 100)}%`);
-          lines.push(`    RAG Readiness:       ${Math.round(g.ragReadiness * 100)}%`);
-          lines.push(`    Assessment: ${g.llmAssessment}`);
-          lines.push(`    Why it matters: ${g.whyThisMattersForAgents}`);
-          if (result.results) {
-            lines.push(`  Results: ${JSON.stringify(result.results, null, 2)}`);
+          const passed = result.passed as string[] | undefined;
+          if (passed && passed.length > 0) {
+            lines.push(`  Passed: ${passed.join(", ")}`);
           }
-        } else if (result.result) {
-          lines.push(`  Result: ${JSON.stringify(result.result, null, 2)}`);
+        } else if (result.analyzer) {
+          // Single analyzer result (LlmSingleResult)
+          const a = result.analyzer as Record<string, unknown>;
+          lines.push(`  Analyzer: ${a.name} (${a.key})`);
+          if (result.level !== undefined) lines.push(`  Level: ${result.level}`);
+          if (result.summary !== undefined) lines.push(`  Summary: ${result.summary}`);
+          if (result.count !== undefined) lines.push(`  Count: ${result.count}`);
+          const examples = result.examples as Array<Record<string, unknown>> | undefined;
+          if (examples && examples.length > 0) {
+            lines.push(`  Examples:`);
+            for (const ex of examples) {
+              lines.push(`    - ${ex.where}${ex.evidence ? ": " + String(ex.evidence) : ""}`);
+            }
+          }
+          if (result.fix !== undefined) lines.push(`  Fix: ${result.fix}`);
         }
 
         lines.push("");
