@@ -95,6 +95,7 @@ Returns available analyzer keys, categories, and weights. Call this first so an 
 
 - no input required
 - current categories include `seo`, `accessibility`, `ux`, `performance`, and `geo`
+- weights returned reflect your personal setup (see [Analysis Setup](#analysis-setup) below)
 
 ### `scan_domain`
 
@@ -127,6 +128,17 @@ Runs audits for one or more URLs. URLs are processed sequentially and emit progr
 
 If you only need AI visibility signals, `category: "geo"` is cheaper than `full` mode and returns the `geoScore` object directly.
 
+## Analysis Setup
+
+From your dashboard at [octo-boost.com/dashboard](https://octo-boost.com/dashboard), you can configure how much each analyzer contributes to the overall score. Set a weight between 0 and 5 for any of the 30+ analyzers.
+
+- **Weight 0** — the analyzer still runs but is excluded from the overall score calculation
+- **Weight 1–5** — higher values give an analyzer more influence over the final score
+- Changes apply immediately to all future API calls made with your key
+- `list_analyzers` always returns your current weights, so agents can adapt their reasoning to your setup
+
+This is useful when you care more about accessibility than performance, or want GEO signals to dominate the score for a content-focused project.
+
 ## GEO/AEO Output
 
 Roadmap item 1 is complete: full audits now include a `geoScore` alongside the technical SEO score.
@@ -152,6 +164,7 @@ Live today:
 - [x] core audit workflow via `list_analyzers`, `scan_domain`, and `analyze`
 - [x] GEO/AEO scoring for AI visibility
 - [x] compact, credit-aware responses for agent execution
+- [x] per-analyzer weight configuration via Analysis Setup in the dashboard
 
 Planned next:
 
