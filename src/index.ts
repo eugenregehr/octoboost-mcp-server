@@ -4,6 +4,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { registerListAnalyzers } from "./tools/list.js";
 import { registerScanDomain } from "./tools/scan.js";
 import { registerAnalyze } from "./tools/analyze.js";
+import { registerGetStoredAnalysis } from "./tools/getStoredAnalysis.js";
 
 const server = new McpServer({
   name: "octoboost-seo",
@@ -13,6 +14,7 @@ const server = new McpServer({
 registerListAnalyzers(server);
 registerScanDomain(server);
 registerAnalyze(server);
+registerGetStoredAnalysis(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

@@ -12,7 +12,7 @@ Get your free API key at [octo-boost.com](https://octo-boost.com). New accounts 
 
 - discover available analyzers with `list_analyzers`
 - crawl a domain for relevant URLs with `scan_domain`
-- run targeted or full audits with `analyze`
+- run full audits with `analyze`
 
 It is built for agent workflows that need SEO and AI-visibility signals inside the reasoning loop without spending thousands of tokens on raw page content.
 
@@ -32,8 +32,6 @@ Running SEO checks directly in an LLM context is expensive. OctoBoost moves the 
 
 - **Token-efficient**: structured results instead of raw HTML
 - **LLM-friendly**: scores, flags, and diagnostics instead of prose parsing
-- **Scoped execution**: run one analyzer, one category, or a full audit
-- **Real-time progress**: `analyze` emits `notifications/progress` after each URL
 - **Credit-aware**: responses include credits used and credits remaining
 - **Predictable errors**: `401` for invalid or expired keys, `402` for exhausted credits
 
@@ -63,12 +61,6 @@ Common config locations:
 - **Cursor**: Cursor MCP settings
 - **OpenClaw**: `~/.openclaw/mcp.json`
 
-Optional local verification with MCP Inspector:
-
-```bash
-OCTOBOOST_API_KEY=your-key npx @modelcontextprotocol/inspector npx octoboost-mcp-server
-```
-
 ## Core Workflow
 
 Most agent flows follow this pattern:
@@ -80,11 +72,8 @@ Most agent flows follow this pattern:
 2. scan_domain { domain: "acme.com", maxPages: 50 }
    -> collect relevant URLs for the audit
 
-3. analyze { urls: [...], mode: "category", category: "accessibility" }
-   -> inspect one category across a batch of pages
-
-4. analyze { urls: [high-priority pages], mode: "full" }
-   -> get the full technical SEO score plus GEO/AEO score
+3. analyze { urls: [...] }
+   -> run a full audit with SEO score + GEO/AEO score for each URL
 ```
 
 ## Tools Overview
@@ -111,22 +100,13 @@ Crawls a domain and returns SEO-relevant URLs.
 
 ### `analyze`
 
-Runs audits for one or more URLs. URLs are processed sequentially and emit progress notifications after each one.
+Runs a full audit for one or more URLs. All 30+ analyzers run on each URL, returning an overall SEO score, per-category scores, and a GEO/AEO score for AI search visibility. URLs are processed sequentially and emit progress notifications after each one.
 
-| Parameter  | Type                                     | Description                          |
-| ---------- | ---------------------------------------- | ------------------------------------ |
-| `urls`     | string[]                                 | URLs to analyze, up to 20            |
-| `mode`     | `"full"` \| `"analyzer"` \| `"category"` | Scope of analysis                    |
-| `analyzer` | string                                   | Required when `mode` is `"analyzer"` |
-| `category` | string                                   | Required when `mode` is `"category"` |
+| Parameter | Type     | Description     |
+| --------- | -------- | --------------- |
+| `urls`    | string[] | URLs to analyze |
 
-| Mode       | What runs     | GEO score  | Typical use                                            |
-| ---------- | ------------- | ---------- | ------------------------------------------------------ |
-| `full`     | All analyzers | Yes        | Comprehensive audit                                    |
-| `category` | One category  | `geo` only | Focused audit such as `accessibility` or AI visibility |
-| `analyzer` | One analyzer  | No         | Targeted check such as `title`                         |
-
-If you only need AI visibility signals, `category: "geo"` is cheaper than `full` mode and returns the `geoScore` object directly.
+**Cost:** 3 credits per URL.
 
 ## Analysis Setup
 
@@ -137,11 +117,10 @@ From your dashboard at [octo-boost.com/dashboard](https://octo-boost.com/dashboa
 - Changes apply immediately to all future API calls made with your key
 - `list_analyzers` always returns your current weights, so agents can adapt their reasoning to your setup
 
-This is useful when you care more about accessibility than performance, or want GEO signals to dominate the score for a content-focused project.
 
 ## GEO/AEO Output
 
-Roadmap item 1 is complete: full audits now include a `geoScore` alongside the technical SEO score.
+Full audits include a `geoScore` alongside the technical SEO score.
 
 This score is meant for AI-search and agent workflows. It helps answer whether a page is easy for systems like ChatGPT, Claude, Gemini, or Perplexity to understand, extract, retrieve, and cite.
 
