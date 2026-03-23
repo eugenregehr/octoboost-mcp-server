@@ -1,6 +1,6 @@
 {
   "name": "octoboost-mcp-server",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "mcpName": "io.github.eugenregehr/geo-seo-analyzer-octoboost",
   "description": "OctoBoost MCP Server for token-efficient SEO / GEO analysis. Analyze multiple URLs with categorized checks and scored results.",
   "repository": {
