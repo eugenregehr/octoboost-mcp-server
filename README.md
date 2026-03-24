@@ -69,7 +69,7 @@ Most agent flows follow this pattern:
 1. list_analyzers
    -> learn categories and available checks
 
-2. scan_domain { domain: "acme.com", maxPages: 50 }
+2. scan_domain { domain: "acme.com" }
    -> collect relevant URLs for the audit
 
 3. analyze { urls: [...] }
@@ -90,13 +90,13 @@ Returns available analyzer keys, categories, and weights. Call this first so an 
 
 Crawls a domain and returns SEO-relevant URLs.
 
-| Parameter             | Type     | Default | Description                        |
-| --------------------- | -------- | ------- | ---------------------------------- |
-| `domain`              | string   | —       | Domain or URL to scan              |
-| `maxPages`            | number   | `100`   | Maximum pages to crawl, up to 500  |
-| `excludePatterns`     | string[] | `[]`    | URL patterns to skip               |
-| `respectRobotsTxt`    | boolean  | `true`  | Honor `robots.txt`                 |
-| `defaultLanguageOnly` | boolean  | `true`  | Skip alternate-language duplicates |
+| Parameter             | Type     | Default        | Description                                                             |
+| --------------------- | -------- | -------------- | ----------------------------------------------------------------------- |
+| `domain`              | string   | —              | Domain or URL to scan                                                   |
+| `maxPages`            | number   | server default | Maximum pages to crawl (capped server-side at the batch analysis limit) |
+| `excludePatterns`     | string[] | `[]`           | URL patterns to skip                                                    |
+| `respectRobotsTxt`    | boolean  | `true`         | Honor `robots.txt`                                                      |
+| `defaultLanguageOnly` | boolean  | `true`         | Skip alternate-language duplicates                                      |
 
 ### `analyze`
 
@@ -118,6 +118,12 @@ From your dashboard at [octo-boost.com/dashboard](https://octo-boost.com/dashboa
 - `list_analyzers` always returns your current weights, so agents can adapt their reasoning to your setup
 
 
+## Core Web Vitals (CrUX)
+
+Full audits include real-user performance data (LCP, CLS, INP, FCP, TTFB) from the Chrome UX Report API at the p75 percentile — the speed 75% of actual Chrome users experienced or better. Google uses these as Search ranking signals.
+
+If no data is returned, the result includes the exact reason (e.g. insufficient traffic, URL not in Google's dataset). This is common for low-traffic sites and does not affect the overall SEO score.
+
 ## GEO/AEO Output
 
 Full audits include a `geoScore` alongside the technical SEO score.
@@ -138,12 +144,6 @@ Key fields include:
 
 ## Project Status
 
-Live today:
-
-- [x] core audit workflow via `list_analyzers`, `scan_domain`, and `analyze`
-- [x] GEO/AEO scoring for AI visibility
-- [x] compact, credit-aware responses for agent execution
-- [x] per-analyzer weight configuration via Analysis Setup in the dashboard
 
 Planned next:
 

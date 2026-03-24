@@ -12,7 +12,7 @@ interface ScanResponse {
 
 const inputSchema = {
   domain: z.string().describe("Domain or URL to scan (e.g. 'example.com' or 'https://example.com')"),
-  maxPages: z.number().int().positive().max(500).optional().default(100).describe("Maximum pages to crawl (default: 100, max: 500)"),
+  maxPages: z.number().int().positive().optional().describe("Maximum pages to crawl (server default applies; capped at the batch analysis limit)"),
   excludePatterns: z.array(z.string()).optional().default([]).describe("URL patterns to exclude from crawling"),
   respectRobotsTxt: z.boolean().optional().default(true).describe("Whether to respect robots.txt (default: true)"),
   defaultLanguageOnly: z.boolean().optional().default(true).describe("Only return pages in the site's default language (default: true)"),

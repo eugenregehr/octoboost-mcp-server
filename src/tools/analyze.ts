@@ -16,6 +16,11 @@ interface GeoScoreResult {
   llmAssessment: string;
 }
 
+interface CwvMetric {
+  p75: string;
+  level: "success" | "warning" | "error";
+}
+
 interface BatchResponse {
   results: Array<{
     url: string;
@@ -25,6 +30,13 @@ interface BatchResponse {
     score?: number;
     scores?: Record<string, number>;
     geoScore?: GeoScoreResult;
+    coreWebVitals?: {
+      lcp?: CwvMetric;
+      cls?: CwvMetric;
+      inp?: CwvMetric;
+      fcp?: CwvMetric;
+      ttfb?: CwvMetric;
+    };
     issues?: Array<Record<string, unknown>>;
     passed?: string[];
   }>;
@@ -115,6 +127,22 @@ export function registerAnalyze(server: McpServer): void {
             lines.push(`    RAG Readiness:       ${Math.round(g.ragReadiness * 100)}%`);
             lines.push(`    Assessment: ${g.llmAssessment}`);
             lines.push(`    Why it matters: ${g.whyThisMattersForAgents}`);
+          }
+          if (result.coreWebVitals) {
+            const cwv = result.coreWebVitals;
+            const cwvMetrics: [string, CwvMetric | undefined][] = [
+              ["LCP",  cwv.lcp],
+              ["CLS",  cwv.cls],
+              ["INP",  cwv.inp],
+              ["FCP",  cwv.fcp],
+              ["TTFB", cwv.ttfb],
+            ];
+            const cwvLines = cwvMetrics
+              .filter(([, m]) => m !== undefined)
+              .map(([k, m]) => `${k}: ${m!.p75} [${m!.level}]`);
+            if (cwvLines.length > 0) {
+              lines.push(`  Core Web Vitals (p75): ${cwvLines.join(" | ")}`);
+            }
           }
           const issues = result.issues as Array<Record<string, unknown>> | undefined;
           if (issues && issues.length > 0) {
